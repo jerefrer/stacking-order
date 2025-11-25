@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+
+begin
+  require 'stacking_order'
+rescue LoadError
+  lib_path = File.expand_path('../lib', __dir__)
+  $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
+  require 'stacking_order'
+end
+
+options = {}
+parser = OptionParser.new do |opts|
+  opts.banner = 'Usage: stacking-order --entries N --rows R --columns C'
+
+  opts.on('-e', '--entries N', Integer, 'Total number of entries') do |value|
+    options[:entries] = value
+  end
+
+  opts.on('-r', '--rows R', Integer, 'Number of rows per page') do |value|
+    options[:rows] = value
+  end
+
+  opts.on('-c', '--columns C', Integer, 'Number of columns per page') do |value|
+    options[:columns] = value
+  end
+
+  opts.on('--visualize', 'Print page-by-page layout and stack order') do
+    options[:visualize] = true
+  end
+
+  opts.on('-v', '--version', 'Print gem version') do
+    puts StackingOrder::VERSION
+    exit 0
+  end
+
+  opts.on('-h', '--help', 'Show this help message') do
+    puts opts
+    exit 0
+  end
+end
+
+begin
+  parser.parse!(ARGV)
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
+  warn e.message
+  warn parser
+  exit 1
+end
+
+missing = %i[entries rows columns].reject { |key| options[key] }
+if missing.any?
+  warn "Missing required options: #{missing.join(', ')}"
+  warn parser
+  exit 1
+end
+
+begin
+  result = StackingOrder.order(entries: options[:entries], rows: options[:rows], columns: options[:columns])
+rescue ArgumentError => e
+  warn e.message
+  exit 1
+end
+
+if options[:visualize]
+  StackingOrder.visualize(entries: options[:entries], rows: options[:rows], columns: options[:columns])
+else
+  puts "Stacking order (#{result.length} positions):"
+  puts result.inspect
+end
