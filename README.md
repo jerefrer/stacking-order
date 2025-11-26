@@ -2,8 +2,14 @@
 
 A tiny Ruby gem that computes how to arrange records on a paginated grid so that,
 after cutting the printed stack into columns and re-stacking them, the final pile
-remains in sequential order. It is useful for printing badges, tickets, or any
-other grid-based layout that is cut in bulk.
+remains in sequential order.
+
+It is useful for printing badges, tickets, or any other grid-based layout that is
+cut in bulk.
+
+It has a `two_sided_flipped` option to support printing on both sides of the
+paper, with the second side flipped, which can be used for printing traditional
+Tibetan books (called pechas) or for similar texts from various traditions.
 
 ## Installation
 
@@ -27,6 +33,9 @@ require 'stacking_order'
 order = StackingOrder.order(entries: 13, rows: 2, columns: 2)
 # => [1, 5, 9, 13, 2, 6, 10, nil, 3, 7, 11, nil, 4, 8, 12]
 # nil entries mark empty slots on the final, partially filled page.
+
+StackingOrder.order(entries: 8, rows: 2, columns: 2, two_sided_flipped: true)
+# => [1, 5, 6, 2, 3, 7, 8, 4]
 
 StackingOrder.visualize(entries: 6, rows: 2, columns: 2)
 # Prints page-by-page grids plus the stack order after cutting.
@@ -78,11 +87,12 @@ page-by-page grids and stack order) and returns non-zero on invalid arguments.
 
 ### Real-world usage
 
-This gem powers the stacking order calculations in
-[pecha-printer](https://github.com/jerefrer/pecha-printer), which itself backs
-the hosted service at <https://pecha-printer.frerejeremy.me>. By publishing the
-logic as a gem, the same algorithm can be reused by other Ruby/Rails projects or
-invoked manually via the CLI.
+This gem powers [stacked-pdf-generator](https://github.com/jeremy/stacked-pdf-generator), which provides the pdfjam/podofocrop
+tooling for producing final print-ready stacks.
+
+In turn, stacked-pdf-generator is used by [pecha-printer](https://github.com/jerefrer/pecha-printer) and the hosted service at
+<https://pecha-printer.frerejeremy.me>. Publishing the stacking logic separately lets other
+Ruby/Rails projects (or CLI scripts) reuse it without needing the full PDF pipeline.
 
 ## Development
 

@@ -165,6 +165,37 @@ class StackingOrderTest < Minitest::Test
                  page_43
   end
 
+  def test_two_sided_layout_simple
+    expected = [1, 3, 4, 2]
+    assert_equal expected, StackingOrder.order(entries: 4, rows: 1, columns: 2, two_sided_flipped: true)
+  end
+
+  def test_two_sided_layout_with_2_x_2_grid
+    expected = [1, 3, 5, nil, nil, nil, 2, 4]
+    assert_equal expected, StackingOrder.order(entries: 5, rows: 2, columns: 2, two_sided_flipped: true)
+  end
+
+  def test_two_sided_layout_with_2_x_2_grid_and_more_entries
+    expected = [1, 4, 7, nil, 8, nil, 2, 5, 3, 6, 9]
+    assert_equal expected, StackingOrder.order(entries: 9, rows: 2, columns: 2, two_sided_flipped: true)
+  end
+
+  def test_two_sided_layout_with_three_columns
+    expected = [1, 4, 7, 8, 5, 2, 3, 6, 9]
+    assert_equal expected, StackingOrder.order(entries: 9, rows: 1, columns: 3, two_sided_flipped: true)
+  end
+
+  def test_two_sided_layout_multiple_pages
+    expected_pages = [
+      [1, 5, 9, 13],
+      [10, 14, 2, 6],
+      [3, 7, 11, 15],
+      [12, 16, 4, 8]
+    ]
+    result = StackingOrder.order(entries: 16, rows: 2, columns: 2, two_sided_flipped: true)
+    assert_equal expected_pages, result.each_slice(4).to_a
+  end
+
   def test_argument_validation
     assert_raises(ArgumentError) { StackingOrder.order(entries: -1, rows: 1, columns: 1) }
     assert_raises(ArgumentError) { StackingOrder.order(entries: 1, rows: 0, columns: 1) }

@@ -14,7 +14,7 @@ module StackingOrder
   # @param rows [Integer] Number of rows in the grid on each page
   # @param columns [Integer] Number of columns in the grid on each page
   # @return [Array<Integer, nil>] The order in which to print entries (with nil for empty cells)
-  def order(entries:, rows:, columns:)
+  def order(entries:, rows:, columns:, two_sided_flipped: false)
     validate_arguments!(entries, rows, columns)
 
     return [] if entries.zero?
@@ -31,6 +31,10 @@ module StackingOrder
       end
     end
 
+    if two_sided_flipped
+      result = apply_two_sided_flip(result, rows, columns)
+    end
+
     result.pop while result.last.nil?
     result
   end
@@ -38,8 +42,8 @@ module StackingOrder
   # Utility method that prints the layout for the provided configuration,
   # showing the entries on each page and the resulting stacks after cutting.
   # Useful for debugging or CLI demos.
-  def visualize(entries:, rows:, columns:, io: $stdout)
-    result = order(entries: entries, rows: rows, columns: columns)
+  def visualize(entries:, rows:, columns:, two_sided_flipped: false, io: $stdout)
+    result = order(entries: entries, rows: rows, columns: columns, two_sided_flipped: two_sided_flipped)
     cells_per_page = rows * columns
     num_pages = (entries.to_f / cells_per_page).ceil
 
@@ -71,6 +75,35 @@ module StackingOrder
 
       io.puts("  Position [#{row_idx + 1},#{col_idx + 1}] stack (bottom→top): #{stack.compact.join(', ')}")
     end
+  end
+
+  def apply_two_sided_flip(result, rows, columns)
+    cells_per_page = rows * columns
+    result.each_slice(cells_per_page).with_index.flat_map do |page, page_index|
+      padded_page = pad_page(page, cells_per_page)
+      page_index.odd? ? flip_page_rows(padded_page, rows, columns) : padded_page
+    end
+  end
+
+  def pad_page(page, cells_per_page)
+    return page if page.length == cells_per_page
+
+    page + Array.new(cells_per_page - page.length)
+  end
+
+  def flip_page_rows(page, rows, columns)
+    if rows == 1
+      row_slice = page.slice(0, columns) || []
+      return row_slice.reverse
+    end
+
+    flipped = []
+    rows.times do |row_index|
+      source_row_index = rows - 1 - row_index
+      row_slice = page.slice(source_row_index * columns, columns) || []
+      flipped.concat(row_slice)
+    end
+    flipped
   end
 
   def validate_arguments!(entries, rows, columns)
